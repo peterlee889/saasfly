@@ -1,5 +1,6 @@
-import { createKysely } from "@vercel/postgres-kysely";
+import { Kysely, PostgresDialect } from "kysely";
 import type { GeneratedAlways } from "kysely";
+import { Pool } from "pg";
 
 interface Database {
   User: {
@@ -36,4 +37,13 @@ interface Database {
   };
 }
 
-export const db = createKysely<Database>();
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false,
+});
+
+export const db = new Kysely<Database>({
+  dialect: new PostgresDialect({
+    pool,
+  }),
+});
