@@ -2,8 +2,7 @@
 
 import React, { useState } from "react";
 import Image from "next/image";
-import { OAuthStrategy } from "@clerk/types";
-import { useSignIn } from "@clerk/nextjs";
+import { signIn } from "next-auth/react";
 
 import { Button } from "@saasfly/ui/button";
 import * as Icons from "@saasfly/ui/icons";
@@ -12,34 +11,23 @@ import { Modal } from "~/components/modal";
 import { siteConfig } from "~/config/site";
 import { useSigninModal } from "~/hooks/use-signin-modal";
 
-export const SignInClerkModal = ({ dict }: { dict: Record<string, string> }) => {
+export const SignInNextAuthModal = ({ dict }: { dict: Record<string, string> }) => {
   const signInModal = useSigninModal();
   const [signInClicked, setSignInClicked] = useState(false);
-  const { signIn } = useSignIn();
 
-  if (!signIn) {
-    return null
-  }
-
-  const signInWith = (strategy: OAuthStrategy) => {
-    const protocol = window.location.protocol
-    const host = window.location.host
-    return signIn
-      .authenticateWithRedirect({
-        strategy,
-        redirectUrl: '/sign-in/sso-callback',
-        redirectUrlComplete: `${protocol}//${host}/dashboard`,
+  const handleSignIn = (provider: string) => {
+    setSignInClicked(true);
+    signIn(provider, { callbackUrl: "/dashboard" })
+      .then(() => {
+        setTimeout(() => {
+          signInModal.onClose();
+        }, 1000);
       })
-      .then((res) => {
-        console.log(res)
-      })
-      .catch((err: any) => {
-        // See https://clerk.com/docs/custom-flows/error-handling
-        // for more info on error handling
-        console.log(err.errors)
-        console.error(err, null, 2)
-      })
-  }
+      .catch((error) => {
+        console.error("Sign in error:", error);
+        setSignInClicked(false);
+      });
+  };
 
   return (
     <Modal showModal={signInModal.isOpen} setShowModal={signInModal.onClose}>
@@ -62,15 +50,7 @@ export const SignInClerkModal = ({ dict }: { dict: Record<string, string> }) => 
           <Button
             variant="default"
             disabled={signInClicked}
-            onClick={() => {
-              setSignInClicked(true);
-              void signInWith('oauth_github')
-                .then(() => {
-                  setTimeout(() => {
-                    signInModal.onClose();
-                  }, 1000)
-                })
-            }}
+            onClick={() => handleSignIn("github")}
           >
             {signInClicked ? (
               <Icons.Spinner className="mr-2 h-4 w-4 animate-spin" />
