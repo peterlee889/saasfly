@@ -1,4 +1,4 @@
-import { getSessionUser } from "./clerk";
+import { getCurrentUser as getNextAuthUser } from "./nextauth";
 
 export interface User {
   id: string;
@@ -7,21 +7,9 @@ export interface User {
   image?: string | null;
 }
 
-declare global {
-  interface CustomJwtSessionClaims {
-    user?: User & {
-      id: string;
-      isAdmin: boolean;
-    }
-  }
-}
-
-export const authOptions = {
-  pages: {
-    signIn: "/login-clerk",
-  },
-}
+export { authOptions } from "./nextauth";
+export { auth } from "./nextauth";
 
 export async function getCurrentUser() {
-  return await getSessionUser();
+  return await getNextAuthUser();
 }
